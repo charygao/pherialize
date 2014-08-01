@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   
-  <groupId>com.github</groupId>
+  <groupId>com.github.micw</groupId>
   <artifactId>pherialize</artifactId>
   <packaging>jar</packaging>
   <name>Pherialize</name>
@@ -13,11 +13,7 @@
     this format back into Java objects.
   </description>
   <inceptionYear>2006</inceptionYear>
-  <url>http://kayahr.github.com/${project.artifactId}/</url>
-  <organization>
-    <name>Klaus Reimer</name>
-    <url>http://www.ailis.de/~k/</url>
-  </organization>
+  <url>https://github.com/micw/pherialize</url>
   
   <licenses>
     <license>
@@ -38,24 +34,25 @@
       <timezone>+1</timezone>
       <url>http://www.ailis.de/~k/</url>
     </developer>        
+    <developer>
+      <id>mw</id>
+      <name>Michael Wyraz</name>
+      <roles>
+        <role>Developer</role>
+      </roles>
+      <timezone>+1</timezone>
+    </developer>        
   </developers>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <releasesUrl>http://nexus.ailis.de/content/repositories/releases/de/ailis/${project.artifactId}/${project.artifactId}/${project.version}</releasesUrl>
-    <snapshotsUrl>http://nexus.ailis.de/content/repositories/snapshots/de/ailis/${project.artifactId}/${project.artifactId}</snapshotsUrl>
   </properties>
   
   <scm>
-    <connection>scm:git:git://github.com/kayahr/${project.artifactId}.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/kayahr/${project.artifactId}.git</developerConnection>
-    <url>http://github.com/kayahr/${project.artifactId}</url>
+    <connection>scm:git:https://github.com/micw/pherialize.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com:micw/pherialize.git</developerConnection>
+    <url>https://github.com/micw/pherialize</url>
   </scm>
-       
-  <issueManagement>
-    <system>GitHub</system>
-    <url>https://github.com/kayahr/${project.artifactId}/issues</url>
-  </issueManagement>
   
   <build>
     <plugins>
