@@ -21,17 +21,19 @@
  * IN THE SOFTWARE.
  */
 
-package de.ailis.pherialize;
+package com.github.pherialize;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.pherialize.Pherialize;
+import com.github.pherialize.test.CustomClass;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import de.ailis.pherialize.test.CustomClass;
 
 
 /**

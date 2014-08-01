@@ -21,66 +21,69 @@
  * IN THE SOFTWARE.
  */
 
-package de.ailis.pherialize.test;
-
-import java.io.Serializable;
+package com.github.pherialize.exceptions;
 
 
 /**
- * CustomClass
+ * Base exception for Pherialize problems.
  * 
  * @author Klaus Reimer (k@ailis.de)
  * @version $Revision$
  */
 
-public class CustomClass implements Serializable
+abstract public class PherializeException extends RuntimeException
 {
     /** Serial version UID */
-    private static final long serialVersionUID = -7396948063312053556L;
+    private static final long serialVersionUID = 1479169743443565173L;
 
-    /** A test value */
-    private final String value;
 
-    /** Test values */
-    private final String[] strings;
+    /**
+     * Constructor
+     */
+
+    public PherializeException()
+    {
+        super();
+    }
 
 
     /**
      * Constructor
      * 
-     * @param value
-     *            A test value
-     * @param strings
-     *            Test values
+     * @param message
+     *            The exception message
      */
 
-    public CustomClass(final String value, final String[] strings)
+    public PherializeException(final String message)
     {
-        this.value = value;
-        this.strings = strings;
+        super(message);
     }
 
 
     /**
-     * Returns the test value
+     * Constructor
      * 
-     * @return The test value
+     * @param message
+     *            The exception message
+     * @param cause
+     *            The root cause
      */
 
-    public String getValue()
+    public PherializeException(final String message, final Throwable cause)
     {
-        return this.value;
+        super(message, cause);
     }
 
 
     /**
-     * Returns the test values
+     * Constructor
      * 
-     * @return The test values
+     * @param cause
+     *            The root cause
      */
 
-    public String[] getStrings()
+    public PherializeException(final Throwable cause)
     {
-        return this.strings;
+        super(cause);
     }
 }

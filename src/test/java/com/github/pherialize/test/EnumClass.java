@@ -21,70 +21,24 @@
  * IN THE SOFTWARE.
  */
 
-package de.ailis.pherialize.exceptions;
-
+package com.github.pherialize.test;
 
 
 /**
- * Exception thrown when someting goes wrong while unserializing.
- * 
+ * A test enum
+ *
  * @author Klaus Reimer (k@ailis.de)
  * @version $Revision$
  */
 
-public class UnserializeException extends PherializeException
+public enum EnumClass
 {
-    /** Serial version UID */
-    private static final long serialVersionUID = -7127648595193318947L;
-
-
-    /**
-     * Constructor
-     */
-
-    public UnserializeException()
-    {
-        super();
-    }
-
-
-    /**
-     * Constructor
-     * 
-     * @param message
-     *            The exception message
-     */
-
-    public UnserializeException(final String message)
-    {
-        super(message);
-    }
-
-
-    /**
-     * Constructor
-     * 
-     * @param message
-     *            The exception message
-     * @param cause
-     *            The root cause
-     */
-
-    public UnserializeException(final String message, final Throwable cause)
-    {
-        super(message, cause);
-    }
-
-
-    /**
-     * Constructor
-     * 
-     * @param cause
-     *            The root cause
-     */
-
-    public UnserializeException(final Throwable cause)
-    {
-        super(cause);
-    }
+    /** Red color */
+    RED,
+    
+    /** Green color */
+    GREEN,
+    
+    /** Blue color */
+    BLUE
 }

@@ -21,9 +21,12 @@
  * IN THE SOFTWARE.
  */
 
-package de.ailis.pherialize;
+package com.github.pherialize;
 
 import java.nio.charset.Charset;
+
+import com.github.pherialize.Mixed;
+import com.github.pherialize.Pherialize;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
