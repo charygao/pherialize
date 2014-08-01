@@ -26,6 +26,7 @@ package com.github.pherialize;
 import com.github.pherialize.Mixed;
 import com.github.pherialize.MixedArray;
 import com.github.pherialize.Pherialize;
+import com.github.pherialize.factory.DefaultObjectFactory;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -188,6 +189,27 @@ public class UnserializerTest extends TestCase
         assertNotSame(test.get(2), test.get(4));
     }
 
+    /**
+     * Tests unserializing a Serializable object
+     */
+
+    public void testUnserializeSerializable()
+    {
+        Unserializer unserializer=new Unserializer("O:6:\"Person\":4:{s:4:\"name\";s:11:\"Arthur Dent\";s:3:\"age\";i:42;s:9:\"earthling\";b:1;s:7:\"special\";N;}");
+        
+        unserializer.setObjectFactory(new DefaultObjectFactory(Person.class.getPackage().getName()));
+        
+        Mixed result=unserializer.unserializeObject();
+        
+        assertNotNull(result);
+        
+        Person person=(Person)result.toObject();
+        assertNotNull(person);
+        assertEquals("Arthur Dent",person.getName());
+        assertEquals(42,person.getAge());
+        assertEquals(true,person.isEarthling());
+        assertNull(person.getSpecial());
+    }
 
     /**
      * Tests unserializing a complex array
@@ -219,4 +241,6 @@ public class UnserializerTest extends TestCase
         assertSame(ford, arthur.getArray("comrade"));
         assertSame(arthur, ford.getArray("comrade"));
     }
+    
+    
 }

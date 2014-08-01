@@ -76,6 +76,9 @@ public class Mixed implements Serializable, Comparable<Object>
     /** Constant for type "array" */
     public static final int TYPE_ARRAY = 9;
 
+    /** Constant for type "object" */
+    public static final int TYPE_SERIALIZABLE = 10;
+    
     /** The value */
     private Object value;
 
@@ -298,6 +301,10 @@ public class Mixed implements Serializable, Comparable<Object>
         else if (value instanceof Boolean)
         {
             return TYPE_BOOLEAN;
+        }
+        else if (value instanceof Serializable)
+        {
+            return TYPE_SERIALIZABLE;
         }
         else
             return TYPE_UNKNOWN;
@@ -610,6 +617,14 @@ public class Mixed implements Serializable, Comparable<Object>
             return false;
     }
 
+    /**
+     * Returns this mixed value as raw object
+     * @return
+     */
+    public Object toObject()
+    {
+        return value;
+    }
 
     /**
      * @see java.lang.Comparable#compareTo(java.lang.Object)

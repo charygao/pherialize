@@ -24,6 +24,7 @@
 package com.github.pherialize;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.Charset;
@@ -279,7 +280,7 @@ public class Serializer
 
     private void serializeString(final String string, final StringBuffer buffer)
     {
-        String decoded = Unserializer.decode(string, charset);
+        String decoded = decode(string, charset);
 
         buffer.append("s:");
         buffer.append(decoded.length());
@@ -561,4 +562,14 @@ public class Serializer
         buffer.append(fieldBuffer);
         buffer.append("}");
     }
+    
+    static String decode(String encoded, Charset charset)
+    {
+        try {
+            return new String(encoded.getBytes(charset), "ISO-8859-1");
+        } catch (UnsupportedEncodingException e) {
+            return encoded;
+        }
+    }
+    
 }

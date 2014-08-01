@@ -50,6 +50,9 @@ public class Person implements Serializable
     /** Special stuff */
     Object special;
 
+    public Person()
+    {
+    }
 
     /**
      * Constructor

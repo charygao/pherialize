@@ -26,9 +26,14 @@ package com.github.pherialize;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.naming.spi.DirObjectFactory;
 
 import com.github.pherialize.exceptions.UnserializeException;
+import com.github.pherialize.factory.ObjectFactory;
 import com.github.pherialize.io.ByteArraySource;
 import com.github.pherialize.io.Source;
 
@@ -51,7 +56,8 @@ public class Unserializer
     /** The object history for resolving references */
     private final List<Object> history;
 
-
+    /** Used to unserialize objects. If no objectFactory is given, objects are unserialized as map **/
+    private ObjectFactory objectFactory;
 
     /**
      * Constructor
@@ -92,6 +98,12 @@ public class Unserializer
         this(data,Charset.defaultCharset());
     }
 
+
+    public void setObjectFactory(ObjectFactory objectFactory)
+    {
+        this.objectFactory = objectFactory;
+    }
+    
     /**
      * Reads a one-byte character from the source.
      * @return
@@ -232,6 +244,10 @@ public class Unserializer
                 result = unserializeReference();
                 break;
 
+            case 'O':
+                result = unserializeSerializable();
+                break;
+
             default:
                 throw new UnserializeException(
                     "Unable to unserialize unknown type " + type);
@@ -241,6 +257,19 @@ public class Unserializer
         return result;
     }
 
+    private String unserializeRawString()
+    {
+        int stringLengthInBytes=readInt(':');
+        
+        readExpected('"');
+        
+        String result=new String(readExactly(stringLengthInBytes),sourceCharset);
+        
+        readExpected('"');
+        
+        return result;
+    }
+    
 
     /**
      * Unserializes the next object in the data stream into a String.
@@ -252,21 +281,11 @@ public class Unserializer
     {
         readExpected(':');
 
-        int stringLengthInBytes=readInt(':');
+        String result=unserializeRawString();
         
-        readExpected('"');
-        
-        String result=new String(readExactly(stringLengthInBytes),sourceCharset);
-        
-        readExpected('"');
         readExpected(';');
         
         return new Mixed(result);
-//        pos = this.data.indexOf(':', this.pos + 2);
-//        length = Integer.parseInt(this.data.substring(this.pos + 2, pos));
-//        this.pos = pos + length + 4;
-//        String unencoded = this.data.substring(pos + 2, pos + 2 + length);
-//        return new Mixed(encode(unencoded, charset));
     }
 
 
@@ -417,24 +436,21 @@ public class Unserializer
         readExpected('}');
         return result;
     }
-
-
-    static String decode(String encoded, Charset charset)
+    
+    private Mixed unserializeSerializable()
     {
-        try {
-            return new String(encoded.getBytes(charset), "ISO-8859-1");
-        } catch (UnsupportedEncodingException e) {
-            return encoded;
+        readExpected(':');
+        
+        String className=unserializeRawString();
+        
+        MixedArray properties=unserializeArray().toArray();
+        
+        if (objectFactory==null)
+        {
+            properties.put("class", className);
+            return new Mixed(properties);
         }
-    }
-
-
-    static String encode(String decoded, Charset charset)
-    {
-        try {
-            return new String(decoded.getBytes("ISO-8859-1"), charset);
-        } catch (UnsupportedEncodingException e) {
-            return decoded;
-        }
+        
+        return new Mixed(objectFactory.createObject(className, properties));
     }
 }
