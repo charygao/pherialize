@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.github.pherialize.exceptions.UnserializeException;
+import com.github.pherialize.io.ByteArraySource;
+import com.github.pherialize.io.Source;
 
 
 /**
@@ -40,18 +42,43 @@ import com.github.pherialize.exceptions.UnserializeException;
 
 public class Unserializer
 {
-    /** The current pointer in the data */
-    private int pos;
-
-    /** The data to unserialize */
-    private final String data;
-
-    /** The original charset of the input data. */
-    private final Charset charset;
+    /** The source where we read from */
+    private final Source source;
+    
+    /** Charset of the source. Used to construct strings **/
+    private final Charset sourceCharset;
 
     /** The object history for resolving references */
     private final List<Object> history;
 
+
+
+    /**
+     * Constructor
+     *
+     * @param source
+     *            The source of data to unserialize
+     */
+
+    public Unserializer(final Source source, final Charset sourceCharset)
+    {
+        super();
+        this.source = source;
+        this.sourceCharset = sourceCharset;
+        this.history = new ArrayList<Object>();
+    }
+
+    /**
+     * Constructor
+     *
+     * @param data
+     *            The data to unserialize
+     */
+
+    public Unserializer(final String data, final Charset sourceCharset)
+    {
+        this(new ByteArraySource(data.getBytes(sourceCharset)),sourceCharset);
+    }
 
     /**
      * Constructor
@@ -62,27 +89,108 @@ public class Unserializer
 
     public Unserializer(final String data)
     {
-        this(data, Charset.forName("UTF-8"));
+        this(data,Charset.defaultCharset());
     }
-
 
     /**
-     * Constructor
-     *
-     * @param data
-     *            The data to unserialize
+     * Reads a one-byte character from the source.
+     * @return
      */
-
-    public Unserializer(final String data, Charset charset)
+    protected char readNextControlCharacter()
     {
-        super();
-        this.data = decode(data, charset);
-        this.charset = charset;
-        this.pos = 0;
-        this.history = new ArrayList<Object>();
+        int result=source.read();
+        if (result<0) throw new UnserializeException("Unexepected end of data.");
+        return (char) result;
     }
-
-
+    
+    /**
+     * Reads a character and compares it to the given character
+     * @throws UnserializeException if the caraters does not match
+     */
+    protected void readExpected(char expected)
+    {
+        char c=readNextControlCharacter();
+        if (c!=expected) throw new UnserializeException("Unexepected character. Expected '"+expected+"' but got '"+c+"'");
+    }
+    
+    /**
+     * Reads digits until "endOfIntegerCharacter" (usually a collon) occurs
+     * @throws UnserializeException on unexpected data
+     */
+    protected int readInt(char endOfIntegerCharacter)
+    {
+        // The code here is similar to Integer.parseInt but uses the "endOfIntegerCharacter" as terminator
+        
+        int result=0;
+        
+        boolean negative=false;
+        boolean first=true;
+        
+        for (;;)
+        {
+            char c=readNextControlCharacter();
+            
+            if (first)
+            {
+                first=false;
+                if (c=='-')
+                {
+                    negative=true;
+                    continue;
+                }
+            }
+            
+            
+            int digit=Character.digit(c, 10);
+            if (digit>=0 && digit<=9)
+            {
+                result=result*10+digit;
+            }
+            else if (c==endOfIntegerCharacter)
+            {
+                break;
+            }
+            else
+            {
+                throw new UnserializeException("Unexepected character. Expected 0...9 or '"+endOfIntegerCharacter+"' but got '"+c+"'");
+            }
+            first=false;
+        }
+        
+        if (negative) result=-result;
+        
+        return result;
+    }
+    
+    /**
+     * Reads from the source until the requests number of bytes is read
+     * @param numberOfBytes
+     * @return
+     */
+    protected byte[] readExactly(int numberOfBytes)
+    {
+        byte[] result=new byte[numberOfBytes];
+        
+        /**
+         * Some code from common-io IOUtils.read
+         */
+        int remaining = numberOfBytes;
+        while (remaining > 0) {
+            int location = numberOfBytes - remaining;
+            int count = source.read(result, location, remaining);
+            if (count<0) // EOF
+            {
+                break;
+            }
+            remaining -= count;
+        }
+        
+        if (remaining!=0) throw new UnserializeException("Unexepected end of data."); 
+        
+        return result;
+    }
+    
+    
     /**
      * Unserializes the next object in the data stream.
      *
@@ -94,7 +202,7 @@ public class Unserializer
         char type;
         Mixed result;
 
-        type = this.data.charAt(this.pos);
+        type = readNextControlCharacter();
         switch (type)
         {
             case 's':
@@ -142,13 +250,23 @@ public class Unserializer
 
     private Mixed unserializeString()
     {
-        int pos, length;
+        readExpected(':');
 
-        pos = this.data.indexOf(':', this.pos + 2);
-        length = Integer.parseInt(this.data.substring(this.pos + 2, pos));
-        this.pos = pos + length + 4;
-        String unencoded = this.data.substring(pos + 2, pos + 2 + length);
-        return new Mixed(encode(unencoded, charset));
+        int stringLengthInBytes=readInt(':');
+        
+        readExpected('"');
+        
+        String result=new String(readExactly(stringLengthInBytes),sourceCharset);
+        
+        readExpected('"');
+        readExpected(';');
+        
+        return new Mixed(result);
+//        pos = this.data.indexOf(':', this.pos + 2);
+//        length = Integer.parseInt(this.data.substring(this.pos + 2, pos));
+//        this.pos = pos + length + 4;
+//        String unencoded = this.data.substring(pos + 2, pos + 2 + length);
+//        return new Mixed(encode(unencoded, charset));
     }
 
 
@@ -160,12 +278,9 @@ public class Unserializer
 
     private Mixed unserializeInteger()
     {
-        Integer result;
-        int pos;
+        readExpected(':');
 
-        pos = this.data.indexOf(';', this.pos + 2);
-        result = Integer.valueOf(this.data.substring(this.pos + 2, pos));
-        this.pos = pos + 1;
+        int result=readInt(';');
         return new Mixed(result);
     }
 
@@ -178,12 +293,47 @@ public class Unserializer
 
     private Mixed unserializeDouble()
     {
-        Double result;
-        int pos;
+        readExpected(':');
 
-        pos = this.data.indexOf(';', this.pos + 2);
-        result = Double.valueOf(this.data.substring(this.pos + 2, pos));
-        this.pos = pos + 1;
+        StringBuilder sb=new StringBuilder();
+        boolean first=true;
+        boolean allowFractionalDigits=true;
+        
+        for (;;)
+        {
+            char c=readNextControlCharacter();
+            
+            if ((c>='0' && c<='9') || (first && c=='-'))
+            {
+                sb.append(c);
+            }
+            else if (allowFractionalDigits && c=='.')
+            {
+                sb.append(c);
+                allowFractionalDigits=false;
+            }
+            else if (c==';')
+            {
+                break;
+            }
+            else
+            {
+                String allowed="0...9";
+                
+                if (first)
+                {
+                    allowed+=" or '-'";
+                }
+                if (allowFractionalDigits)
+                {
+                    allowed+=" or '.'";
+                }
+                allowed+=" or ';'";
+                
+                throw new UnserializeException("Unexepected character. Expected "+allowed+" but got '"+c+"'");
+            }
+        }
+        Double result=Double.parseDouble(sb.toString());
         return new Mixed(result);
     }
 
@@ -196,12 +346,8 @@ public class Unserializer
 
     private Mixed unserializeReference()
     {
-        int index;
-        int pos;
-
-        pos = this.data.indexOf(';', this.pos + 2);
-        index = Integer.parseInt(this.data.substring(this.pos + 2, pos));
-        this.pos = pos + 1;
+        readExpected(':');
+        int index = readInt(';');
         return (Mixed) this.history.get(index - 1);
     }
 
@@ -214,11 +360,13 @@ public class Unserializer
 
     private Mixed unserializeBoolean()
     {
-        Boolean result;
+        readExpected(':');
 
-        result = Boolean.valueOf(this.data.charAt(this.pos + 2) == '1');
-        this.pos += 4;
-        return new Mixed(result);
+        int result=readInt(';');
+        
+        if (result<0 || result>1) throw new UnserializeException("Unexpected boolean value. Expected 0 or 1 but got "+result);
+            
+        return new Mixed(result==1);
     }
 
 
@@ -230,7 +378,7 @@ public class Unserializer
 
     private Mixed unserializeNull()
     {
-        this.pos += 2;
+        readExpected(';');        
         return null;
     }
 
@@ -245,16 +393,17 @@ public class Unserializer
 
     private Mixed unserializeArray()
     {
+        readExpected(':');
+        
         Mixed result;
         MixedArray array;
-        int pos;
         int max;
         int i;
         Object key, value;
 
-        pos = this.data.indexOf(':', this.pos + 2);
-        max = Integer.parseInt(this.data.substring(this.pos + 2, pos));
-        this.pos = pos + 2;
+        max = readInt(':');
+        readExpected('{');
+                
         array = new MixedArray(max);
         result = new Mixed(array);
         this.history.add(result);
@@ -265,7 +414,7 @@ public class Unserializer
             value = unserializeObject();
             array.put(key, value);
         }
-        this.pos++;
+        readExpected('}');
         return result;
     }
 
